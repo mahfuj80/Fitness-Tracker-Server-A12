@@ -11,7 +11,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.c29ia8d.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.fllucor.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -22,9 +22,28 @@ const client = new MongoClient(uri, {
 });
 async function run() {
   try {
+    app.listen(port, () => {
+      console.log(`Bistro boss is sitting on port ${port}`);
+    });
+    // Connect the client to the server	(optional starting in v4.7)
+    // await client.connect();
+
+    // collections
+    const newsLetterCollection = client
+      .db('fitnessTracker')
+      .collection('newsLetter');
+
     // conform Server is Running
     app.get('/', (req, res) => {
       res.send('Fitness Tracker is running...');
+    });
+
+    // Newsletter Email Post
+    app.post('/news-letter', async (req, res) => {
+      const item = req.body;
+      console.log(item);
+      const result = await newsLetterCollection.insertOne(item);
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection
