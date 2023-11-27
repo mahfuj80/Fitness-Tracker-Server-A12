@@ -35,6 +35,9 @@ async function run() {
     const trainersLetterCollection = client
       .db('fitnessTracker')
       .collection('trainers');
+    const imageCollection = client
+      .db('fitnessTracker')
+      .collection('galleryImages');
 
     // conform Server is Running
     app.get('/', (req, res) => {
@@ -46,6 +49,17 @@ async function run() {
       const item = req.body;
       console.log(item);
       const result = await newsLetterCollection.insertOne(item);
+      res.send(result);
+    });
+
+    // Get Gallery Images by query
+    app.get('/galleryImages', async (req, res) => {
+      let queryObj = {};
+      const category = req.query.category;
+      if (category) {
+        queryObj.category = category;
+      }
+      const result = await imageCollection.find(queryObj).toArray();
       res.send(result);
     });
 
