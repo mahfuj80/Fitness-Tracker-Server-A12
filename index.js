@@ -32,6 +32,9 @@ async function run() {
     const newsLetterCollection = client
       .db('fitnessTracker')
       .collection('newsLetter');
+    const trainersLetterCollection = client
+      .db('fitnessTracker')
+      .collection('trainers');
 
     // conform Server is Running
     app.get('/', (req, res) => {
@@ -43,6 +46,12 @@ async function run() {
       const item = req.body;
       console.log(item);
       const result = await newsLetterCollection.insertOne(item);
+      res.send(result);
+    });
+
+    // Get All Trainers
+    app.get('/trainers', async (req, res) => {
+      const result = await trainersLetterCollection.find().toArray();
       res.send(result);
     });
 
