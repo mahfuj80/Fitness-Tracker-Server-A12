@@ -38,7 +38,9 @@ async function run() {
     const imageCollection = client
       .db('fitnessTracker')
       .collection('galleryImages');
+    const usersCollection = client.db('fitnessTracker').collection('users');
 
+    //  -----------------------------------------------------JWT ---------------------------------------
     // jwt related api
     app.post('/jwt', async (req, res) => {
       const user = req.body;
@@ -48,6 +50,7 @@ async function run() {
       res.send({ token });
     });
 
+    // ---------------------------------------------------- MIDDLE-WARES -------------------------------
     // middlewares
     const verifyToken = (req, res, next) => {
       // console.log('inside verified token', req.headers.authorization);
@@ -64,12 +67,12 @@ async function run() {
       });
     };
 
-    // conform Server is Running
+    //------------------------------------------------ conform Server is Running --------------------------
     app.get('/', (req, res) => {
       res.send('Fitness Tracker is running...');
     });
 
-    // Newsletter Email Post
+    // -------------------------------------------------Newsletter Email Post--------------------------------
     app.post('/news-letter', async (req, res) => {
       const item = req.body;
       console.log(item);
@@ -77,7 +80,7 @@ async function run() {
       res.send(result);
     });
 
-    // Get Gallery Images by query
+    // -----------------------------------------------Get Gallery Images by query----------------------------------
     app.get('/galleryImages', async (req, res) => {
       let queryObj = {};
       const category = req.query.category;
@@ -88,6 +91,22 @@ async function run() {
       res.send(result);
     });
 
+    // ---------------------------------------------------- USERS ---------------------------------------
+
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      // insert email if user doesn't exists:
+      // you can do this many ways (1. email unique, 2. upsert 3. simple checking)
+      const query = { email: user?.email };
+      const existingUser = await usersCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: 'user already exists', insertedId: null });
+      }
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    // ----------------------------------------------------------TRAINERS-------------------------------------------
     // Get All Trainers
     app.get('/trainers', async (req, res) => {
       const result = await trainersLetterCollection.find().toArray();
