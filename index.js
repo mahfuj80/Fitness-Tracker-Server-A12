@@ -39,6 +39,15 @@ async function run() {
       .db('fitnessTracker')
       .collection('galleryImages');
 
+    // jwt related api
+    app.post('/jwt', async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: '1h',
+      });
+      res.send({ token });
+    });
+
     // conform Server is Running
     app.get('/', (req, res) => {
       res.send('Fitness Tracker is running...');
