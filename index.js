@@ -32,13 +32,16 @@ async function run() {
     const newsLetterCollection = client
       .db('fitnessTracker')
       .collection('newsLetter');
-    const trainersLetterCollection = client
+    const trainersCollection = client
       .db('fitnessTracker')
       .collection('trainers');
     const imageCollection = client
       .db('fitnessTracker')
       .collection('galleryImages');
     const usersCollection = client.db('fitnessTracker').collection('users');
+    const appliedTrainersCollection = client
+      .db('fitnessTracker')
+      .collection('appliedTrainers');
 
     //  -----------------------------------------------------JWT ---------------------------------------
     // jwt related api
@@ -74,53 +77,113 @@ async function run() {
 
     // -------------------------------------------------Newsletter Email Post--------------------------------
     app.post('/news-letter', async (req, res) => {
-      const item = req.body;
-      console.log(item);
-      const result = await newsLetterCollection.insertOne(item);
-      res.send(result);
+      try {
+        const item = req.body;
+        console.log(item);
+        const result = await newsLetterCollection.insertOne(item);
+        res.send(result);
+      } catch (error) {
+        res.send(error);
+      }
     });
 
     // -----------------------------------------------Get Gallery Images by query----------------------------------
     app.get('/galleryImages', async (req, res) => {
-      let queryObj = {};
-      const category = req.query.category;
-      if (category) {
-        queryObj.category = category;
+      try {
+        let queryObj = {};
+        const category = req.query.category;
+        if (category) {
+          queryObj.category = category;
+        }
+        const result = await imageCollection.find(queryObj).toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+        res.send(error);
       }
-      const result = await imageCollection.find(queryObj).toArray();
-      res.send(result);
     });
 
     // ---------------------------------------------------- USERS ---------------------------------------
 
+    // post users
     app.post('/users', async (req, res) => {
-      const user = req.body;
-      // insert email if user doesn't exists:
-      // you can do this many ways (1. email unique, 2. upsert 3. simple checking)
-      const query = { email: user?.email };
-      const existingUser = await usersCollection.findOne(query);
-      if (existingUser) {
-        return res.send({ message: 'user already exists', insertedId: null });
+      try {
+        const user = req.body;
+        // insert email if user doesn't exists:
+        // you can do this many ways (1. email unique, 2. upsert 3. simple checking)
+        const query = { email: user?.email };
+        const existingUser = await usersCollection.findOne(query);
+        if (existingUser) {
+          return res.send({ message: 'user already exists', insertedId: null });
+        }
+        const result = await usersCollection.insertOne(user);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
       }
-      const result = await usersCollection.insertOne(user);
-      res.send(result);
+    });
+
+    app.get('/users/role', verifyToken, async (req, res) => {
+      try {
+        const email = req.query.email;
+        if (email !== req.decoded.email) {
+          return res.status(403).send({ message: 'forbidden access' });
+        }
+        const query = { email: email };
+        const user = await usersCollection.findOne(query);
+        let admin = false;
+        if (user) {
+          admin = user?.role;
+        }
+        res.send({ admin });
+      } catch (error) {
+        res.send(error);
+      }
     });
 
     // ----------------------------------------------------------TRAINERS-------------------------------------------
     // Get All Trainers
     app.get('/trainers', async (req, res) => {
-      const result = await trainersLetterCollection.find().toArray();
-      res.send(result);
+      try {
+        const result = await trainersCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     // Get Single Trainers By Id
     app.get('/trainers/:id', async (req, res) => {
-      const id = req.params.id;
-      const query = {
-        _id: new ObjectId(id),
-      };
-      const result = await trainersLetterCollection.findOne(query);
-      res.send(result);
+      try {
+        const id = req.params.id;
+        const query = {
+          _id: new ObjectId(id),
+        };
+        const result = await trainersCollection.findOne(query);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    // -----------------------------------------------Applied Trainers ------------------------------
+    // Post a single Trainers
+    app.post('/trainers', verifyToken, async (req, res) => {
+      try {
+        const trainer = req.body;
+        const query = { email: trainer.email };
+        const existingTrainer = await appliedTrainersCollection.findOne(query);
+        if (existingTrainer) {
+          return res.send({
+            message: 'exists',
+            insertedId: null,
+          });
+        }
+        const result = await appliedTrainersCollection.insertOne(trainer);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     // Send a ping to confirm a successful connection
