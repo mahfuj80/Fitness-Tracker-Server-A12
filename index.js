@@ -94,6 +94,19 @@ async function run() {
       next();
     };
 
+    // verify Trainers or Admin
+    const verifyTrainersOrAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      const isAdmin = user?.role === 'trainer';
+      const isTrainer = user?.role === 'admin';
+      if (!isAdmin && !isTrainer) {
+        return res.status(403).send({ message: 'forbidden access' });
+      }
+      next();
+    };
+
     //------------------------------------------------ conform Server is Running --------------------------
     app.get('/', (req, res) => {
       res.send('Fitness Tracker is running...');
@@ -331,6 +344,8 @@ async function run() {
         res.status(500).send('Internal Server Error');
       }
     });
+
+    app.post('/forum', verifyToken, verifyTrainers);
 
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 });
