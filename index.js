@@ -70,12 +70,37 @@ async function run() {
       });
     };
 
+    // verify admin after verify token
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      const isAdmin = user?.role === 'admin';
+      if (!isAdmin) {
+        return res.status(403).send({ message: 'forbidden access' });
+      }
+      next();
+    };
+
+    // verify trainer after verify token
+    const verifyTrainers = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      const isAdmin = user?.role === 'trainer';
+      if (!isAdmin) {
+        return res.status(403).send({ message: 'forbidden access' });
+      }
+      next();
+    };
+
     //------------------------------------------------ conform Server is Running --------------------------
     app.get('/', (req, res) => {
       res.send('Fitness Tracker is running...');
     });
 
     // -------------------------------------------------Newsletter Email Post--------------------------------
+    // Post NewsLetter Subscribers
     app.post('/news-letter', async (req, res) => {
       try {
         const item = req.body;
@@ -83,6 +108,7 @@ async function run() {
         const result = await newsLetterCollection.insertOne(item);
         res.send(result);
       } catch (error) {
+        console.log(error);
         res.send(error);
       }
     });
@@ -201,6 +227,29 @@ async function run() {
       } catch (error) {
         console.log(error);
         res.send(error);
+      }
+    });
+
+    // ------------------------------------------------------Admin ----------------------------------------------
+    // Get Count of NewsLetter Subscribers
+    app.get('/admin-stats', verifyToken, verifyAdmin, async (req, res) => {
+      try {
+        const totalSubscribers =
+          await newsLetterCollection.estimatedDocumentCount();
+        const totalUsers = await usersCollection.estimatedDocumentCount();
+        const totalTrainers = await trainersCollection.estimatedDocumentCount();
+        const totalAppliedTrainers =
+          await appliedTrainersCollection.estimatedDocumentCount();
+
+        res.send({
+          totalSubscribers,
+          totalUsers,
+          totalTrainers,
+          totalAppliedTrainers,
+        });
+      } catch (error) {
+        res.send(error);
+        console.log(error);
       }
     });
 
