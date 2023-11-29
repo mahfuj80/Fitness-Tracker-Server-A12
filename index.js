@@ -301,6 +301,37 @@ async function run() {
       }
     );
 
+    app.post('/admin/accept-applied-trainer/:id', async (req, res) => {
+      try {
+        // Delete document from the first collection
+        const appliedTrainerInfo = req.body;
+        const id = req.params.id;
+        let { _id, ...updatedTrainerInfo } = appliedTrainerInfo;
+        updatedTrainerInfo.startDate = new Date();
+
+        await appliedTrainersCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
+
+        // Insert document into the second collection
+        await trainersCollection.insertOne(updatedTrainerInfo);
+
+        // Update document in the third collection
+        await usersCollection.updateOne(
+          { email: appliedTrainerInfo.email },
+          { $set: { role: 'trainer' } }
+        );
+
+        res.status(200).send({
+          acknowledge: true,
+          message: 'Document Delete Update Insert successful',
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 });
     console.log(
