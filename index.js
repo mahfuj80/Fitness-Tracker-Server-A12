@@ -285,6 +285,22 @@ async function run() {
       }
     );
 
+    // get applied Trainers
+    app.get(
+      '/admin/applied-trainers',
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        try {
+          const result = await appliedTrainersCollection.find().toArray();
+          res.send(result);
+        } catch (error) {
+          console.log(error);
+          res.send(error);
+        }
+      }
+    );
+
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 });
     console.log(
