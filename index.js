@@ -253,6 +253,38 @@ async function run() {
       }
     });
 
+    //get all subscribe
+    app.get(
+      '/admin/all-subscribers',
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        try {
+          const result = await newsLetterCollection.find().toArray();
+          res.send(result);
+        } catch (error) {
+          console.log(error);
+          res.send(error);
+        }
+      }
+    );
+
+    // get all Trainers
+    app.get(
+      '/admin/all-trainers',
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        try {
+          const result = await trainersCollection.find().toArray();
+          res.send(result);
+        } catch (error) {
+          console.log(error);
+          res.send(error);
+        }
+      }
+    );
+
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 });
     console.log(
