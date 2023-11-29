@@ -123,19 +123,19 @@ async function run() {
       }
     });
 
-    app.get('/users/role', verifyToken, async (req, res) => {
+    app.get('/users/role/:email', verifyToken, async (req, res) => {
       try {
-        const email = req.query.email;
+        const email = req.params.email;
         if (email !== req.decoded.email) {
           return res.status(403).send({ message: 'forbidden access' });
         }
         const query = { email: email };
         const user = await usersCollection.findOne(query);
-        let admin = false;
+        let role = false;
         if (user) {
-          admin = user?.role;
+          role = user?.role;
         }
-        res.send({ admin });
+        res.send({ role });
       } catch (error) {
         res.send(error);
       }
@@ -168,7 +168,7 @@ async function run() {
 
     // -----------------------------------------------Applied Trainers ------------------------------
     // Post a single Trainers
-    app.post('/trainers', verifyToken, async (req, res) => {
+    app.post('/applied-trainers', verifyToken, async (req, res) => {
       try {
         const trainer = req.body;
         const query = { email: trainer.email };
@@ -183,6 +183,24 @@ async function run() {
         res.send(result);
       } catch (error) {
         console.log(error);
+      }
+    });
+
+    // /users/isApplied/${user?.email}
+    // Get Is User Applied For Trainer?
+    app.get('/applied-trainers/:email', verifyToken, async (req, res) => {
+      try {
+        const email = req.params.email;
+        const query = { email: email };
+        const isApplied = await appliedTrainersCollection.findOne(query);
+        if (isApplied) {
+          return res.send(true);
+        } else {
+          return res.send(false);
+        }
+      } catch (error) {
+        console.log(error);
+        res.send(error);
       }
     });
 
