@@ -43,6 +43,8 @@ async function run() {
       .db('fitnessTracker')
       .collection('appliedTrainers');
 
+    const forumsCollection = client.db('fitnessTracker').collection('forums');
+
     //  -----------------------------------------------------JWT ---------------------------------------
     // jwt related api
     app.post('/jwt', async (req, res) => {
@@ -314,6 +316,7 @@ async function run() {
       }
     );
 
+    // handle Accept By Admin
     app.post('/admin/accept-applied-trainer/:id', async (req, res) => {
       try {
         // Delete document from the first collection
@@ -345,7 +348,27 @@ async function run() {
       }
     });
 
-    app.post('/forum', verifyToken, verifyTrainers);
+    // Post Forums Added by Admin and Trainers
+    app.post('/forum', verifyToken, verifyTrainersOrAdmin, async (req, res) => {
+      try {
+        const forumData = req.body;
+        const result = await forumsCollection.insertOne(forumData);
+        res.send(result);
+      } catch (error) {
+        res.status(500).send('Internal Server Error!!');
+        console.log(error);
+      }
+    });
+
+    // Get all forums
+    app.get('/forum', async (req, res) => {
+      try {
+        const result = await forumsCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ message: 'Internal Server Error' });
+      }
+    });
 
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 });
