@@ -44,6 +44,7 @@ async function run() {
       .collection('appliedTrainers');
 
     const forumsCollection = client.db('fitnessTracker').collection('forums');
+    const classesCollection = client.db('fitnessTracker').collection('classes');
 
     //  -----------------------------------------------------JWT ---------------------------------------
     // jwt related api
@@ -204,6 +205,27 @@ async function run() {
         res.send(result);
       } catch (error) {
         console.log(error);
+      }
+    });
+    // Post single class
+    app.post('/class', verifyToken, verifyTrainersOrAdmin, async (req, res) => {
+      try {
+        const classData = req.body;
+        const result = await classesCollection.insertOne(classData);
+        res.send(result);
+      } catch (error) {
+        res.status(500).send('Internal Server Error!!');
+        console.log(error);
+      }
+    });
+
+    // Get all classes
+    app.get('/class', async (req, res) => {
+      try {
+        const result = await classesCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ message: 'Internal Server Error' });
       }
     });
 
